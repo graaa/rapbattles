@@ -8,7 +8,7 @@ from typing import Generator
 from config import settings
 
 # Create database engine
-engine = create_engine(settings.database_url)
+engine = create_engine(settings.database_url, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

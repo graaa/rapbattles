@@ -74,6 +74,15 @@ export class ApiClient {
     });
   }
 
+  async create_event_token_endpoint(eventId: string, adminKey: string): Promise<{ token: string }> {
+    return this.request(`/admin/events/${eventId}/token`, {
+      method: 'POST',
+      headers: {
+        'X-Admin-Key': adminKey,
+      },
+    });
+  }
+
   // SSE for live updates
   createSSEConnection(battleId: string): EventSource {
     return new EventSource(`${this.baseUrl}/sse/battles/${battleId}`);

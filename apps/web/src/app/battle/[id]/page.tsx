@@ -47,7 +47,7 @@ export default function BattlePage() {
   };
 
   const handleVote = async (choice: VoteChoice) => {
-    if (!battle || !eventToken || battle.status !== BattleStatus.OPEN) {
+    if (!battle || !eventToken || battle.status !== 'open') {
       return;
     }
 
@@ -114,7 +114,7 @@ export default function BattlePage() {
     );
   }
 
-  const isOpen = battle.status === BattleStatus.OPEN;
+  const isOpen = battle.status === 'open';
   const canVote = isOpen && !voted && !voting;
 
   return (
@@ -141,7 +141,7 @@ export default function BattlePage() {
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                   Voting Open
                 </span>
-              ) : battle.status === BattleStatus.CLOSED ? (
+              ) : battle.status === 'closed' ? (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
                   Voting Closed
                 </span>
@@ -164,7 +164,7 @@ export default function BattlePage() {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Button
               className={`vote-button vote-button-a ${!canVote ? 'vote-button-disabled' : ''}`}
-              onClick={() => handleVote(VoteChoice.A)}
+              onClick={() => handleVote('A')}
               disabled={!canVote}
             >
               {voting ? <LoadingSpinner size="sm" /> : `Vote for ${battle.mc_a}`}
@@ -172,7 +172,7 @@ export default function BattlePage() {
             
             <Button
               className={`vote-button vote-button-b ${!canVote ? 'vote-button-disabled' : ''}`}
-              onClick={() => handleVote(VoteChoice.B)}
+              onClick={() => handleVote('B')}
               disabled={!canVote}
             >
               {voting ? <LoadingSpinner size="sm" /> : `Vote for ${battle.mc_b}`}

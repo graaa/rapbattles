@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    transpilePackages: ['@rapbattles/core', '@rapbattles/ui'],
-  },
+  transpilePackages: ['@rapbattles/core', '@rapbattles/ui'],
+  output: 'standalone',
 }
 
 module.exports = nextConfig

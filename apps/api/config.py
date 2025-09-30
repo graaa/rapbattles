@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """Application settings."""
     
     # Database
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/rapbattles"
+    database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/rapbattles"
     
     # Redis
     redis_url: str = "redis://localhost:6379/0"
