@@ -118,8 +118,8 @@ export default function BattlePage() {
   const canVote = isOpen && !voted && !voting;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 py-4 px-4">
+      <div className="max-w-md mx-auto">
         {/* Battle Info */}
         <Card className="mb-8">
           <CardContent className="text-center py-8">
@@ -161,21 +161,41 @@ export default function BattlePage() {
 
         {/* Vote Buttons */}
         {isOpen && (
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="space-y-4 mb-8">
             <Button
-              className={`vote-button vote-button-a ${!canVote ? 'vote-button-disabled' : ''}`}
+              className={`w-full h-16 text-lg font-bold vote-button vote-button-a ${!canVote ? 'vote-button-disabled' : ''}`}
               onClick={() => handleVote('A')}
               disabled={!canVote}
+              style={{
+                background: canVote ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#ccc',
+                border: 'none',
+                borderRadius: '15px',
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                padding: '20px',
+                boxShadow: canVote ? '0 8px 25px rgba(102, 126, 234, 0.3)' : 'none'
+              }}
             >
-              {voting ? <LoadingSpinner size="sm" /> : `Vote for ${battle.mc_a}`}
+              {voting ? <LoadingSpinner size="sm" /> : `🔥 ${battle.mc_a}`}
             </Button>
             
             <Button
-              className={`vote-button vote-button-b ${!canVote ? 'vote-button-disabled' : ''}`}
+              className={`w-full h-16 text-lg font-bold vote-button vote-button-b ${!canVote ? 'vote-button-disabled' : ''}`}
               onClick={() => handleVote('B')}
               disabled={!canVote}
+              style={{
+                background: canVote ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : '#ccc',
+                border: 'none',
+                borderRadius: '15px',
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                padding: '20px',
+                boxShadow: canVote ? '0 8px 25px rgba(240, 147, 251, 0.3)' : 'none'
+              }}
             >
-              {voting ? <LoadingSpinner size="sm" /> : `Vote for ${battle.mc_b}`}
+              {voting ? <LoadingSpinner size="sm" /> : `🔥 ${battle.mc_b}`}
             </Button>
           </div>
         )}

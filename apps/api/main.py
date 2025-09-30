@@ -7,7 +7,10 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException, status, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
+import qrcode
+from io import BytesIO
+import base64
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -15,7 +18,7 @@ from database import get_db, engine
 from models import Base, Battle, Vote, BattleStatus, VoteChoice
 from schemas import (
     HealthResponse, VoteRequest, VoteResponse, TallyResponse, 
-    BattleResponse, AdminOpenBattleRequest
+    BattleResponse, AdminOpenBattleRequest, AdminCreateBattleRequest
 )
 from auth import get_current_event, verify_admin_key, get_client_ip, create_event_token
 from redis_client import redis_client
@@ -279,6 +282,253 @@ async def create_event_token_endpoint(
     """Create an event token (admin only)."""
     token = create_event_token(event_id)
     return {"event_id": event_id, "token": token}
+
+
+@app.post("/admin/battles")
+async def create_battle(
+    battle_data: AdminCreateBattleRequest,
+    _: None = Depends(verify_admin_key),
+    db: Session = Depends(get_db)
+):
+    """Create a new battle (admin only)."""
+    import uuid
+    
+    battle = Battle(
+        id=str(uuid.uuid4()),
+        event_id=battle_data.event_id,
+        mc_a=battle_data.mc_a,
+        mc_b=battle_data.mc_b,
+        starts_at=battle_data.starts_at,
+        ends_at=battle_data.ends_at,
+        status=BattleStatus.SCHEDULED
+    )
+    
+    db.add(battle)
+    db.commit()
+    db.refresh(battle)
+    
+    return {
+        "id": battle.id,
+        "mc_a": battle.mc_a,
+        "mc_b": battle.mc_b,
+        "status": battle.status,
+        "starts_at": battle.starts_at,
+        "ends_at": battle.ends_at
+    }
+
+
+@app.get("/battles/{battle_id}/qr")
+async def get_battle_qr_code(
+    battle_id: str,
+    db: Session = Depends(get_db)
+):
+    """Generate QR code for a battle."""
+    battle = db.query(Battle).filter(Battle.id == battle_id).first()
+    if not battle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Battle not found"
+        )
+    
+    # Create QR code
+    battle_url = f"http://localhost:3000/battle/{battle_id}"
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(battle_url)
+    qr.make(fit=True)
+    
+    # Create QR code image
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    
+    return {
+        "battle_id": battle_id,
+        "battle_name": f"{battle.mc_a} vs {battle.mc_b}",
+        "qr_code": f"data:image/png;base64,{img_str}",
+        "url": battle_url,
+        "status": battle.status
+    }
+
+
+@app.get("/battles/{battle_id}/qr-page", response_class=HTMLResponse)
+async def get_battle_qr_page(
+    battle_id: str,
+    db: Session = Depends(get_db)
+):
+    """Generate QR code page for a battle."""
+    battle = db.query(Battle).filter(Battle.id == battle_id).first()
+    if not battle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Battle not found"
+        )
+    
+    # Create QR code
+    battle_url = f"http://localhost:3000/battle/{battle_id}"
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(battle_url)
+    qr.make(fit=True)
+    
+    # Create QR code image
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    
+    # Generate HTML page
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>QR Code - {battle.mc_a} vs {battle.mc_b}</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                text-align: center;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }}
+            .container {{
+                background: white;
+                border-radius: 20px;
+                padding: 40px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                max-width: 400px;
+                width: 100%;
+            }}
+            h1 {{
+                color: #333;
+                margin-bottom: 10px;
+                font-size: 2em;
+            }}
+            .battle-info {{
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 15px;
+                margin: 20px 0;
+                border: 2px solid #e9ecef;
+            }}
+            .mc-names {{
+                font-size: 1.5em;
+                font-weight: bold;
+                color: #495057;
+                margin-bottom: 10px;
+            }}
+            .status {{
+                display: inline-block;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-weight: bold;
+                margin: 10px 0;
+            }}
+            .status.open {{ background: #d4edda; color: #155724; }}
+            .status.closed {{ background: #f8d7da; color: #721c24; }}
+            .status.scheduled {{ background: #fff3cd; color: #856404; }}
+            .qr-code {{
+                margin: 30px 0;
+            }}
+            .qr-code img {{
+                border: 3px solid #e9ecef;
+                border-radius: 15px;
+                padding: 20px;
+                background: white;
+            }}
+            .url {{
+                font-family: monospace;
+                background: #e9ecef;
+                padding: 15px;
+                border-radius: 10px;
+                word-break: break-all;
+                margin: 20px 0;
+                font-size: 0.9em;
+            }}
+            .instructions {{
+                color: #6c757d;
+                font-size: 0.9em;
+                margin-top: 20px;
+            }}
+            .live-indicator {{
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                background: #28a745;
+                border-radius: 50%;
+                margin-right: 8px;
+                animation: pulse 2s infinite;
+            }}
+            @keyframes pulse {{
+                0% {{ opacity: 1; }}
+                50% {{ opacity: 0.5; }}
+                100% {{ opacity: 1; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🎤 RapBattle Voter</h1>
+            
+            <div class="battle-info">
+                <div class="mc-names">{battle.mc_a} vs {battle.mc_b}</div>
+                <div class="status {battle.status}">
+                    {f'<span class="live-indicator"></span>' if battle.status == 'open' else ''}
+                    {battle.status.title()}
+                </div>
+                <div><strong>Starts:</strong> {battle.starts_at.strftime('%H:%M')}</div>
+                <div><strong>Ends:</strong> {battle.ends_at.strftime('%H:%M')}</div>
+            </div>
+            
+            <div class="qr-code">
+                <h3>📱 Scan to Vote</h3>
+                <img src="data:image/png;base64,{img_str}" alt="QR Code" />
+            </div>
+            
+            <div class="url">
+                <strong>Direct Link:</strong><br>
+                <a href="{battle_url}" target="_blank">{battle_url}</a>
+            </div>
+            
+            <div class="instructions">
+                <p><strong>How to vote:</strong></p>
+                <p>1. Scan the QR code with your phone camera</p>
+                <p>2. Tap the notification to open the voting page</p>
+                <p>3. Choose your favorite MC</p>
+                <p>4. Watch the live results update!</p>
+            </div>
+        </div>
+        
+        <script>
+            // Auto-refresh page every 30 seconds to check status
+            if ('{battle.status}' === 'scheduled') {{
+                setTimeout(() => location.reload(), 30000);
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_content)
 
 
 if __name__ == "__main__":

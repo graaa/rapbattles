@@ -43,6 +43,15 @@ class VoteResponse(BaseModel):
     tally: Optional[TallyResponse] = None
 
 
+class AdminCreateBattleRequest(BaseModel):
+    """Admin create battle request schema."""
+    event_id: str
+    mc_a: str
+    mc_b: str
+    starts_at: datetime
+    ends_at: datetime
+
+
 class AdminOpenBattleRequest(BaseModel):
     """Admin open battle request schema."""
     starts_at: Optional[datetime] = None
