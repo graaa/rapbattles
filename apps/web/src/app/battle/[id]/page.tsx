@@ -1,0 +1,212 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { ApiClient, Battle, VoteChoice, BattleStatus } from '@rapbattles/core';
+import { Button, Card, CardContent, LoadingSpinner } from '@rapbattles/ui';
+import { getDeviceHash } from '@/lib/device';
+
+export default function BattlePage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const battleId = params.id as string;
+  const eventToken = searchParams.get('t');
+
+  const [battle, setBattle] = useState<Battle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [voting, setVoting] = useState(false);
+  const [voted, setVoted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tally, setTally] = useState({ A: 0, B: 0 });
+
+  const api = new ApiClient();
+
+  useEffect(() => {
+    if (!eventToken) {
+      setError('Missing event token');
+      setLoading(false);
+      return;
+    }
+
+    loadBattle();
+  }, [battleId, eventToken]);
+
+  const loadBattle = async () => {
+    try {
+      const battleData = await api.getBattle(battleId);
+      setBattle(battleData);
+      
+      // Load initial tally
+      const tallyData = await api.getTallies(battleId);
+      setTally(tallyData);
+    } catch (err) {
+      setError('Failed to load battle');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVote = async (choice: VoteChoice) => {
+    if (!battle || !eventToken || battle.status !== BattleStatus.OPEN) {
+      return;
+    }
+
+    setVoting(true);
+    setError(null);
+
+    try {
+      const deviceHash = getDeviceHash();
+      const result = await api.vote(
+        {
+          battle_id: battleId,
+          choice,
+          device_hash: deviceHash,
+        },
+        eventToken
+      );
+
+      if (result.success) {
+        setVoted(true);
+        if (result.tally) {
+          setTally(result.tally);
+        }
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to vote');
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4">
+          <CardContent className="text-center">
+            <h1 className="text-xl font-bold text-red-600 mb-4">Error</h1>
+            <p className="text-gray-600">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!battle) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4">
+          <CardContent className="text-center">
+            <h1 className="text-xl font-bold text-gray-900 mb-4">Battle Not Found</h1>
+            <p className="text-gray-600">The requested battle could not be found.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const isOpen = battle.status === BattleStatus.OPEN;
+  const canVote = isOpen && !voted && !voting;
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Battle Info */}
+        <Card className="mb-8">
+          <CardContent className="text-center py-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Rap Battle</h1>
+            <div className="grid grid-cols-2 gap-8 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-blue-600 mb-2">MC A</h2>
+                <p className="text-lg">{battle.mc_a}</p>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-red-600 mb-2">MC B</h2>
+                <p className="text-lg">{battle.mc_b}</p>
+              </div>
+            </div>
+            
+            {/* Status */}
+            <div className="mb-4">
+              {isOpen ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  Voting Open
+                </span>
+              ) : battle.status === BattleStatus.CLOSED ? (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                  Voting Closed
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                  Scheduled
+                </span>
+              )}
+            </div>
+
+            {/* Current Tally */}
+            <div className="text-sm text-gray-600">
+              Current votes: {tally.A + tally.B}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Vote Buttons */}
+        {isOpen && (
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Button
+              className={`vote-button vote-button-a ${!canVote ? 'vote-button-disabled' : ''}`}
+              onClick={() => handleVote(VoteChoice.A)}
+              disabled={!canVote}
+            >
+              {voting ? <LoadingSpinner size="sm" /> : `Vote for ${battle.mc_a}`}
+            </Button>
+            
+            <Button
+              className={`vote-button vote-button-b ${!canVote ? 'vote-button-disabled' : ''}`}
+              onClick={() => handleVote(VoteChoice.B)}
+              disabled={!canVote}
+            >
+              {voting ? <LoadingSpinner size="sm" /> : `Vote for ${battle.mc_b}`}
+            </Button>
+          </div>
+        )}
+
+        {/* Vote Confirmation */}
+        {voted && (
+          <Card className="mb-8">
+            <CardContent className="text-center py-6">
+              <h2 className="text-xl font-bold text-green-600 mb-2">Vote Recorded!</h2>
+              <p className="text-gray-600">Thank you for voting.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Live Tally */}
+        <Card>
+          <CardContent className="py-6">
+            <h2 className="text-xl font-bold text-center mb-4">Live Results</h2>
+            <div className="grid grid-cols-2 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-blue-600">{tally.A}</div>
+                <div className="text-sm text-gray-600">{battle.mc_a}</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-red-600">{tally.B}</div>
+                <div className="text-sm text-gray-600">{battle.mc_b}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
