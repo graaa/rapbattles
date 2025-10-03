@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     admin_key: str = "change-me"
     
     # Event settings
-    event_default_window: int = 180  # seconds
+    event_default_window: int = 86400  # seconds (24 hours)
     
     # Anti-abuse
     ip_rate_limit: int = 5  # votes per IP per sliding window

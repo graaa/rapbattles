@@ -57,7 +57,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - NEXT_PUBLIC_API_BASE=http://localhost:8000
     depends_on:
       api:

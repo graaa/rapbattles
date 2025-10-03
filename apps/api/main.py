@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db, engine
-from models import Base, Battle, Vote, BattleStatus, VoteChoice
+from models import Base, Battle, Vote, Event, BattleStatus, VoteChoice
 from schemas import (
     HealthResponse, VoteRequest, VoteResponse, TallyResponse, 
     BattleResponse, AdminOpenBattleRequest, AdminCreateBattleRequest
@@ -74,14 +74,43 @@ async def get_battle(battle_id: str, db: Session = Depends(get_db)):
 
 @app.post("/vote", response_model=VoteResponse)
 async def vote(
-    vote_request: VoteRequest,
+    request: Request,
     event_data: dict = Depends(get_current_event),
-    request: Request = None,
     db: Session = Depends(get_db)
 ):
     """Cast a vote for a battle."""
+    import json
+    
+    # Debug the raw request
+    body = await request.body()
+    print(f"DEBUG VOTE: Raw request body: {body}")
+    print(f"DEBUG VOTE: Request headers: {dict(request.headers)}")
+    
+    try:
+        # Parse JSON manually
+        data = json.loads(body) if body else {}
+        print(f"DEBUG VOTE: Parsed JSON data: {data}")
+        
+        # Extract vote data
+        battle_id = data.get('battle_id')
+        choice = data.get('choice')
+        device_hash = data.get('device_hash')
+        
+        if not battle_id or not choice or not device_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing required fields: battle_id, choice, device_hash"
+            )
+            
+    except json.JSONDecodeError as e:
+        print(f"DEBUG VOTE: JSON decode error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON format"
+        )
+    
     # Get battle
-    battle = db.query(Battle).filter(Battle.id == vote_request.battle_id).first()
+    battle = db.query(Battle).filter(Battle.id == battle_id).first()
     if not battle:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -112,8 +141,8 @@ async def vote(
     
     # Check for existing vote from this device
     existing_vote = db.query(Vote).filter(
-        Vote.battle_id == vote_request.battle_id,
-        Vote.device_hash == vote_request.device_hash
+        Vote.battle_id == battle_id,
+        Vote.device_hash == device_hash
     ).first()
     
     if existing_vote:
@@ -124,9 +153,9 @@ async def vote(
     
     # Create vote
     vote = Vote(
-        battle_id=vote_request.battle_id,
-        choice=vote_request.choice,
-        device_hash=vote_request.device_hash,
+        battle_id=battle_id,
+        choice=choice,
+        device_hash=device_hash,
         ip_address=ip_address
     )
     
@@ -230,28 +259,44 @@ async def battle_sse(battle_id: str, db: Session = Depends(get_db)):
 @app.post("/admin/battles/{battle_id}/open")
 async def open_battle(
     battle_id: str,
-    request_data: AdminOpenBattleRequest,
+    request: Request,
     _: None = Depends(verify_admin_key),
     db: Session = Depends(get_db)
 ):
     """Open a battle for voting (admin only)."""
-    battle = db.query(Battle).filter(Battle.id == battle_id).first()
-    if not battle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Battle not found"
-        )
+    import json
     
-    battle.status = BattleStatus.OPEN
+    # Debug the raw request
+    body = await request.body()
+    print(f"DEBUG OPEN: Raw request body: {body}")
+    print(f"DEBUG OPEN: Request headers: {dict(request.headers)}")
     
-    if request_data.starts_at:
-        battle.starts_at = request_data.starts_at
-    if request_data.ends_at:
-        battle.ends_at = request_data.ends_at
-    
-    db.commit()
-    
-    return {"message": "Battle opened successfully"}
+    try:
+        # Parse JSON manually
+        data = json.loads(body) if body else {}
+        print(f"DEBUG OPEN: Parsed JSON data: {data}")
+        
+        battle = db.query(Battle).filter(Battle.id == battle_id).first()
+        if not battle:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Battle not found"
+            )
+        
+        battle.status = BattleStatus.OPEN
+        
+        # Optional: update start/end times if provided
+        if data.get("starts_at"):
+            battle.starts_at = data["starts_at"]
+        if data.get("ends_at"):
+            battle.ends_at = data["ends_at"]
+        
+        db.commit()
+        
+        return {"message": "Battle opened successfully"}
+    except Exception as e:
+        print(f"DEBUG OPEN: Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/admin/battles/{battle_id}/close")
@@ -286,35 +331,162 @@ async def create_event_token_endpoint(
 
 @app.post("/admin/battles")
 async def create_battle(
-    battle_data: AdminCreateBattleRequest,
+    request: Request,
     _: None = Depends(verify_admin_key),
     db: Session = Depends(get_db)
 ):
     """Create a new battle (admin only)."""
     import uuid
+    import json
     
-    battle = Battle(
-        id=str(uuid.uuid4()),
-        event_id=battle_data.event_id,
-        mc_a=battle_data.mc_a,
-        mc_b=battle_data.mc_b,
-        starts_at=battle_data.starts_at,
-        ends_at=battle_data.ends_at,
-        status=BattleStatus.SCHEDULED
-    )
+    # Debug the raw request first
+    body = await request.body()
+    print(f"DEBUG: Raw request body: {body}")
+    print(f"DEBUG: Request headers: {dict(request.headers)}")
     
-    db.add(battle)
-    db.commit()
-    db.refresh(battle)
+    try:
+        # Parse JSON manually
+        data = json.loads(body)
+        print(f"DEBUG: Parsed JSON data: {data}")
+        
+        # Create battle manually
+        battle = Battle(
+            id=str(uuid.uuid4()),
+            event_id=data["event_id"],
+            mc_a=data["mc_a"],
+            mc_b=data["mc_b"],
+            starts_at=data["starts_at"],
+            ends_at=data["ends_at"],
+            status=BattleStatus.SCHEDULED
+        )
+        
+        db.add(battle)
+        db.commit()
+        db.refresh(battle)
+        
+        return {
+            "id": battle.id,
+            "mc_a": battle.mc_a,
+            "mc_b": battle.mc_b,
+            "status": battle.status,
+            "starts_at": battle.starts_at,
+            "ends_at": battle.ends_at
+        }
+    except Exception as e:
+        print(f"DEBUG: Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/admin/events")
+async def get_all_events(
+    _: None = Depends(verify_admin_key),
+    db: Session = Depends(get_db)
+):
+    """Get all events (admin only)."""
+    # Get all events from the events table
+    events = db.query(Event).all()
     
-    return {
-        "id": battle.id,
-        "mc_a": battle.mc_a,
-        "mc_b": battle.mc_b,
-        "status": battle.status,
-        "starts_at": battle.starts_at,
-        "ends_at": battle.ends_at
-    }
+    # Don't auto-create default event - let the list be empty if no events exist
+    
+    return [
+        {
+            "id": str(event.id),
+            "name": event.name,
+            "created_at": event.created_at.isoformat()
+        }
+        for event in events
+    ]
+
+
+@app.post("/admin/events")
+async def create_event(
+    request: Request,
+    _: None = Depends(verify_admin_key),
+    db: Session = Depends(get_db)
+):
+    """Create a new event (admin only)."""
+    try:
+        # Manually parse the request body
+        body = await request.body()
+        print(f"DEBUG CREATE EVENT: Raw request body: {body}")
+        print(f"DEBUG CREATE EVENT: Request headers: {dict(request.headers)}")
+        
+        import json
+        event_data = json.loads(body)
+        print(f"DEBUG CREATE EVENT: Parsed JSON data: {event_data}")
+        
+        # Create new event
+        new_event = Event(
+            name=event_data["name"]
+        )
+        db.add(new_event)
+        db.commit()
+        db.refresh(new_event)
+        
+        return {
+            "id": str(new_event.id),
+            "name": new_event.name,
+            "created_at": new_event.created_at.isoformat()
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"DEBUG: Error creating event: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/admin/events/{event_id}")
+async def delete_event(
+    event_id: str,
+    _: None = Depends(verify_admin_key),
+    db: Session = Depends(get_db)
+):
+    """Delete an event (admin only)."""
+    try:
+        # Check if event exists
+        event = db.query(Event).filter(Event.id == event_id).first()
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        
+        # Delete all battles associated with this event first
+        battles_count = db.query(Battle).filter(Battle.event_id == event_id).count()
+        if battles_count > 0:
+            # Delete all battles for this event
+            db.query(Battle).filter(Battle.event_id == event_id).delete()
+            print(f"DEBUG: Deleted {battles_count} battles for event {event_id}")
+        
+        # Delete the event
+        db.delete(event)
+        db.commit()
+        
+        return {"message": "Event deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"DEBUG: Error deleting event: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/admin/events/{event_id}/battles")
+async def get_battles_by_event(
+    event_id: str,
+    _: None = Depends(verify_admin_key),
+    db: Session = Depends(get_db)
+):
+    """Get all battles for an event (admin only)."""
+    battles = db.query(Battle).filter(Battle.event_id == event_id).all()
+    
+    return [
+        {
+            "id": battle.id,
+            "event_id": battle.event_id,
+            "mc_a": battle.mc_a,
+            "mc_b": battle.mc_b,
+            "status": battle.status,
+            "starts_at": battle.starts_at,
+            "ends_at": battle.ends_at
+        }
+        for battle in battles
+    ]
 
 
 @app.get("/battles/{battle_id}/qr")

@@ -43,6 +43,14 @@ export const TallySchema = z.object({
 });
 export type Tally = z.infer<typeof TallySchema>;
 
+// Event schemas
+export const EventSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  created_at: z.string().datetime(),
+});
+export type Event = z.infer<typeof EventSchema>;
+
 // Admin schemas
 export const AdminOpenBattleSchema = z.object({
   starts_at: z.string().datetime().optional(),

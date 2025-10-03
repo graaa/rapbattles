@@ -10,7 +10,7 @@ export default function BattlePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const battleId = params.id as string;
-  const eventToken = searchParams.get('t');
+  const eventToken = searchParams.get('token');
 
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);

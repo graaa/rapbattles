@@ -1,4 +1,4 @@
-# Simple Next.js production build
+# Simple Next.js build
 FROM node:18-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -15,19 +15,20 @@ COPY . .
 # Build the application
 RUN corepack enable pnpm && pnpm run build
 
-# Production image
+# Simple runner
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV development
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next ./.next
 COPY --from=base --chown=nextjs:nodejs /app/apps/web/public ./public
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
+COPY --from=base --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
@@ -36,4 +37,4 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "apps/web/server.js"]
+CMD ["npm", "run", "dev"]
