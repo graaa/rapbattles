@@ -60,6 +60,22 @@ async def health_check():
     return HealthResponse(status="ok")
 
 
+@app.get("/events/{event_id}")
+async def get_event(event_id: str, db: Session = Depends(get_db)):
+    """Get event details."""
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found"
+        )
+    return {
+        "id": str(event.id),
+        "name": event.name,
+        "created_at": event.created_at.isoformat()
+    }
+
+
 @app.get("/battles/{battle_id}", response_model=BattleResponse)
 async def get_battle(battle_id: str, db: Session = Depends(get_db)):
     """Get battle details."""

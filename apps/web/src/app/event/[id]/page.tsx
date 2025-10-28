@@ -15,6 +15,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(eventToken);
+  const [eventName, setEventName] = useState<string>('🎤 Evento de Rap Battle');
 
   const api = new ApiClient();
 
@@ -24,6 +25,13 @@ export default function EventPage() {
 
   const loadData = async () => {
     try {
+      // Obtener información del evento
+      const eventResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://167.71.80.114:8000'}/events/${eventId}`);
+      if (eventResponse.ok) {
+        const eventData = await eventResponse.json();
+        setEventName(eventData.name);
+      }
+      
       // Si no hay token, obtenerlo del API
       let currentToken = token;
       if (!currentToken) {
@@ -81,7 +89,7 @@ export default function EventPage() {
         {/* Event Header */}
         <Card className="mb-8">
           <CardContent className="text-center py-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">🎤 Evento de Rap Battle</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">{eventName}</h1>
             <p className="text-lg text-gray-600">Elige una batalla para votar</p>
           </CardContent>
         </Card>
