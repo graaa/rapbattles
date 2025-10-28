@@ -155,29 +155,28 @@ async def vote(
             detail="Rate limit exceeded. Please try again later."
         )
     
-    # Check for existing vote from this device
+    # Check for existing vote from this device (allow changing vote)
     existing_vote = db.query(Vote).filter(
         Vote.battle_id == battle_id,
         Vote.device_hash == device_hash
     ).first()
     
     if existing_vote:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You have already voted in this battle"
+        # Update existing vote instead of rejecting
+        existing_vote.choice = VoteChoice(choice)
+        db.commit()
+        db.refresh(existing_vote)
+    else:
+        # Create new vote
+        vote = Vote(
+            battle_id=battle_id,
+            choice=VoteChoice(choice),
+            device_hash=device_hash,
+            ip_address=ip_address
         )
-    
-    # Create vote
-    vote = Vote(
-        battle_id=battle_id,
-        choice=choice,
-        device_hash=device_hash,
-        ip_address=ip_address
-    )
-    
-    db.add(vote)
-    db.commit()
-    db.refresh(vote)
+        db.add(vote)
+        db.commit()
+        db.refresh(vote)
     
     # Update Redis counters
     await redis_client.increment_vote(str(battle_id), choice.value)
