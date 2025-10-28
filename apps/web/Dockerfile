@@ -40,7 +40,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/next.config.js ./next.config.js
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules ./node_modules
 
 USER nextjs
 
