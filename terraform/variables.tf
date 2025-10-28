@@ -10,6 +10,12 @@ variable "region" {
   default     = "nyc3"
 }
 
+variable "domain_name" {
+  description = "Domain name for the application"
+  type        = string
+  default     = "juezbatalla.online"
+}
+
 variable "droplet_size" {
   description = "Size of the droplet"
   type        = string

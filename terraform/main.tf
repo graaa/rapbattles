@@ -33,8 +33,8 @@ resource "digitalocean_droplet" "app" {
     apt-get update -y
     apt-get upgrade -y
     
-    # Install git
-    apt-get install -y git
+    # Install git, nginx, certbot
+    apt-get install -y git nginx certbot python3-certbot-nginx
     
     # Docker ya está instalado en docker-20-04 image
     
@@ -63,10 +63,16 @@ resource "digitalocean_droplet" "app" {
     # Start application
     docker compose -f docker-compose.prod.yml up -d --build
     
+    # Copy nginx config
+    cp nginx.conf /etc/nginx/sites-available/juezbatalla.online
+    ln -s /etc/nginx/sites-available/juezbatalla.online /etc/nginx/sites-enabled/
+    rm /etc/nginx/sites-enabled/default
+    nginx -t && systemctl reload nginx
+    
     # Setup firewall
     ufw allow 22/tcp
-    ufw allow 3000/tcp
-    ufw allow 8000/tcp
+    ufw allow 80/tcp
+    ufw allow 443/tcp
     ufw --force enable
   EOF
 
