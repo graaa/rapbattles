@@ -27,6 +27,14 @@ from config import settings
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# Run migrations on startup
+try:
+    from migrations import run_migrations
+    run_migrations()
+    print("✅ Migrations completed")
+except Exception as e:
+    print(f"⚠️ Migration check: {e}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
