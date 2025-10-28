@@ -1,0 +1,50 @@
+# Simple production build for Next.js
+FROM node:18-alpine AS base
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@latest --activate
+
+# Copy all necessary files
+COPY ../../package.json ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ../../turbo.json ./
+COPY ../../packages ./packages
+COPY package.json ./apps/web/
+COPY . ./apps/web
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build packages and web app
+RUN pnpm --filter @rapbattles/core build
+RUN pnpm --filter @rapbattles/ui build
+
+# Copy and use production config
+COPY next.config.prod.js ./apps/web/next.config.js
+
+# Build web app
+RUN pnpm --filter @rapbattles/web build
+
+# Production runner
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/standalone ./apps/web
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=base --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "apps/web/server.js"]

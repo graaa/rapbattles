@@ -1,0 +1,20 @@
+# DigitalOcean configuration
+do_token = "your-digitalocean-api-token"
+region   = "nyc3"
+droplet_size = "s-2vcpu-4gb"  # Options: "s-1vcpu-1gb" ($6), "s-2vcpu-4gb" ($24), "s-4vcpu-8gb" ($48)
+ssh_key_fingerprint = "your-ssh-key-fingerprint"
+
+# Repository to clone
+repository_url = "https://github.com/graaa/rapbattles.git"
+
+# Database configuration
+postgres_db       = "rapbattles"
+postgres_user     = "postgres"
+postgres_password = "CHANGE_THIS_TO_A_SECURE_PASSWORD"  # USE A STRONG PASSWORD!
+
+# Application secrets - USE SECURE VALUES!
+signing_secret = "CHANGE_THIS_TO_A_SECURE_SECRET"  # Generate with: openssl rand -hex 32
+admin_key      = "CHANGE_THIS_TO_A_SECURE_ADMIN_KEY"  # Generate with: openssl rand -hex 32
+
+# API configuration
+api_base_url = "http://YOUR_DROPLET_IP:8000"  # Will be replaced by actual IP after deployment

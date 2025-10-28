@@ -1,40 +1,52 @@
-# Simple Next.js build
-FROM node:18-alpine AS base
+# Build stage - Install ALL dependencies including dev
+FROM node:18-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies
-COPY package.json ./
-RUN corepack enable pnpm && pnpm i --no-frozen-lockfile
+# Enable pnpm
+RUN corepack enable pnpm
 
-# Copy workspace files
-COPY ../../package.json ../../pnpm-workspace.yaml ../../turbo.json ./
-COPY ../../packages ./packages
-COPY . .
+# Copy root package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json ./
 
-# Build the application
-RUN corepack enable pnpm && pnpm run build
+# Copy packages
+COPY packages ./packages
 
-# Simple runner
+# Copy web app
+COPY apps/web ./apps/web
+
+# Install dependencies (THIS installs TypeScript!)
+RUN pnpm install --frozen-lockfile
+
+# Build packages first
+WORKDIR /app
+RUN pnpm --filter @rapbattles/core build
+RUN pnpm --filter @rapbattles/ui build
+
+# Build web app
+RUN pnpm --filter @rapbattles/web build
+
+# Runtime stage
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV development
+ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next ./.next
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/public ./public
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
-COPY --from=base --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Copy built app
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/next.config.js ./next.config.js
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-CMD ["npm", "run", "dev"]
+CMD ["node_modules/.bin/next", "start"]
