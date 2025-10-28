@@ -23,7 +23,7 @@ export default function BattlePage() {
 
   useEffect(() => {
     if (!eventToken) {
-      setError('Missing event token');
+      setError('Token de evento faltante');
       setLoading(false);
       return;
     }
@@ -40,7 +40,7 @@ export default function BattlePage() {
       const tallyData = await api.getTallies(battleId);
       setTally(tallyData);
     } catch (err) {
-      setError('Failed to load battle');
+      setError('Error al cargar batalla');
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ export default function BattlePage() {
         setError(result.message);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to vote');
+      setError(err instanceof Error ? err.message : 'Error al votar');
     } finally {
       setVoting(false);
     }
@@ -106,8 +106,8 @@ export default function BattlePage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md w-full mx-4">
           <CardContent className="text-center">
-            <h1 className="text-xl font-bold text-gray-900 mb-4">Battle Not Found</h1>
-            <p className="text-gray-600">The requested battle could not be found.</p>
+            <h1 className="text-xl font-bold text-gray-900 mb-4">Batalla no encontrada</h1>
+            <p className="text-gray-600">La batalla solicitada no se pudo encontrar.</p>
           </CardContent>
         </Card>
       </div>
@@ -123,7 +123,7 @@ export default function BattlePage() {
         {/* Battle Info */}
         <Card className="mb-8">
           <CardContent className="text-center py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Rap Battle</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Batalla de Rap</h1>
             <div className="grid grid-cols-2 gap-8 mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-blue-600 mb-2">MC A</h2>
@@ -139,22 +139,22 @@ export default function BattlePage() {
             <div className="mb-4">
               {isOpen ? (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  Voting Open
+                  Votación Abierta
                 </span>
               ) : battle.status === 'closed' ? (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                  Voting Closed
+                  Votación Cerrada
                 </span>
               ) : (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                  Scheduled
+                  Programada
                 </span>
               )}
             </div>
 
             {/* Current Tally */}
             <div className="text-sm text-gray-600">
-              Current votes: {tally.A + tally.B}
+              Votos actuales: {tally.A + tally.B}
             </div>
           </CardContent>
         </Card>
@@ -204,8 +204,8 @@ export default function BattlePage() {
         {voted && (
           <Card className="mb-8">
             <CardContent className="text-center py-6">
-              <h2 className="text-xl font-bold text-green-600 mb-2">Vote Recorded!</h2>
-              <p className="text-gray-600">Thank you for voting.</p>
+              <h2 className="text-xl font-bold text-green-600 mb-2">¡Voto registrado!</h2>
+              <p className="text-gray-600">Gracias por votar.</p>
             </CardContent>
           </Card>
         )}
@@ -213,7 +213,7 @@ export default function BattlePage() {
         {/* Live Tally */}
         <Card>
           <CardContent className="py-6">
-            <h2 className="text-xl font-bold text-center mb-4">Live Results</h2>
+            <h2 className="text-xl font-bold text-center mb-4">Resultados en Tiempo Real</h2>
             <div className="grid grid-cols-2 gap-8 text-center">
               <div>
                 <div className="text-3xl font-bold text-blue-600">{tally.A}</div>

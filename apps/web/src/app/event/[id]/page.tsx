@@ -19,7 +19,7 @@ export default function EventPage() {
 
   useEffect(() => {
     if (!eventToken) {
-      setError('Missing event token');
+      setError('Token de evento faltante');
       setLoading(false);
       return;
     }
@@ -32,7 +32,7 @@ export default function EventPage() {
       const battlesData = await api.getBattlesByEvent(eventId);
       setBattles(battlesData);
     } catch (err) {
-      setError('Failed to load battles');
+      setError('Error al cargar batallas');
     } finally {
       setLoading(false);
     }
@@ -65,8 +65,8 @@ export default function EventPage() {
         {/* Event Header */}
         <Card className="mb-8">
           <CardContent className="text-center py-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">🎤 Rap Battle Event</h1>
-            <p className="text-lg text-gray-600">Choose a battle to vote on</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">🎤 Evento de Rap Battle</h1>
+            <p className="text-lg text-gray-600">Elige una batalla para votar</p>
           </CardContent>
         </Card>
 
@@ -74,8 +74,8 @@ export default function EventPage() {
         {battles.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">No Battles Yet</h2>
-              <p className="text-gray-500">Battles will appear here once they are created.</p>
+              <h2 className="text-xl font-semibold text-gray-600 mb-2">Aún no hay batallas</h2>
+              <p className="text-gray-500">Las batallas aparecerán aquí una vez que se creen.</p>
             </CardContent>
           </Card>
         ) : (
@@ -100,15 +100,15 @@ export default function EventPage() {
                       <div className="mb-4">
                         {isOpen ? (
                           <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                            🔥 Voting Open
+                            🔥 Votación Abierta
                           </span>
                         ) : isClosed ? (
                           <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                            ❌ Voting Closed
+                            ❌ Votación Cerrada
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                            ⏰ Scheduled
+                            ⏰ Programada
                           </span>
                         )}
                       </div>
@@ -137,9 +137,9 @@ export default function EventPage() {
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                       >
-                        {isOpen ? '🔥 Vote Now' : 
-                         isClosed ? '❌ Voting Closed' : 
-                         '⏰ Coming Soon'}
+                        {isOpen ? '🔥 Votar Ahora' : 
+                         isClosed ? '❌ Votación Cerrada' : 
+                         '⏰ Próximamente'}
                       </Button>
                     </div>
                   </CardContent>
@@ -152,7 +152,7 @@ export default function EventPage() {
         {/* Footer */}
         <div className="mt-12 text-center">
           <p className="text-gray-500 text-sm">
-            Powered by RapBattle Voter
+            Potenciado por RapBattle Voter
           </p>
         </div>
       </div>
