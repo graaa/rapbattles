@@ -180,12 +180,12 @@ async def vote(
     db.refresh(vote)
     
     # Update Redis counters
-    await redis_client.increment_vote(str(vote_request.battle_id), vote_request.choice.value)
+    await redis_client.increment_vote(str(battle_id), choice.value)
     
     # Get current tally and publish update
-    tally = await get_tallies_from_db(str(vote_request.battle_id), db)
-    await redis_client.set_tally(str(vote_request.battle_id), {"A": tally.A, "B": tally.B})
-    await redis_client.publish_tally(str(vote_request.battle_id), {"A": tally.A, "B": tally.B})
+    tally = await get_tallies_from_db(str(battle_id), db)
+    await redis_client.set_tally(str(battle_id), {"A": tally.A, "B": tally.B})
+    await redis_client.publish_tally(str(battle_id), {"A": tally.A, "B": tally.B})
     
     return VoteResponse(
         success=True,
