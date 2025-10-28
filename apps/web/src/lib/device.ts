@@ -13,7 +13,15 @@ export function getDeviceHash(): string {
   
   if (!deviceHash) {
     // Generate a stable device hash
-    const randomId = crypto.randomUUID();
+    // Use alternative if crypto.randomUUID is not available
+    const randomId = (crypto.randomUUID || (() => {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }))();
+    
     const userAgent = navigator.userAgent;
     const timestamp = Date.now().toString();
     
