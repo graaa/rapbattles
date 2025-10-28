@@ -213,7 +213,8 @@ async def get_tallies_from_db(battle_id: str, db: Session) -> TallyResponse:
     
     tally = {"A": 0, "B": 0, "REPLICA": 0}
     for choice, count in result:
-        tally[choice.value] = count
+        # choice is already the enum value (string)
+        tally[str(choice)] = count
     
     # Cache the result
     await redis_client.set_tally(battle_id, tally)
