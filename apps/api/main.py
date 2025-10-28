@@ -204,6 +204,20 @@ async def get_tallies(battle_id: str, db: Session = Depends(get_db)):
     return await get_tallies_from_db(battle_id, db)
 
 
+@app.get("/votes/{battle_id}/check/{device_hash}")
+async def check_if_voted(battle_id: str, device_hash: str, db: Session = Depends(get_db)):
+    """Check if a device has already voted in a battle."""
+    vote = db.query(Vote).filter(
+        Vote.battle_id == battle_id,
+        Vote.device_hash == device_hash
+    ).first()
+    
+    return {
+        "has_voted": vote is not None,
+        "choice": vote.choice.value if vote else None
+    }
+
+
 async def get_tallies_from_db(battle_id: str, db: Session) -> TallyResponse:
     """Get tallies from database."""
     # Check Redis cache first

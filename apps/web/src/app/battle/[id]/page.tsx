@@ -39,12 +39,38 @@ export default function BattlePage() {
       // Load initial tally
       const tallyData = await api.getTallies(battleId);
       setTally(tallyData);
+      
+      // Check if already voted
+      const deviceHash = getDeviceHash();
+      const checkResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://167.71.80.114:8000'}/votes/${battleId}/check/${deviceHash}`);
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.has_voted) {
+          setVoted(true);
+        }
+      }
     } catch (err) {
       setError('Error al cargar batalla');
     } finally {
       setLoading(false);
     }
   };
+  
+  // Poll for tally updates every 2 seconds
+  useEffect(() => {
+    if (!battle || battle.status !== 'open') return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const tallyData = await api.getTallies(battleId);
+        setTally(tallyData);
+      } catch (err) {
+        // Silently fail
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [battle, battleId]);
 
   const handleVote = async (choice: VoteChoice) => {
     if (!battle || !eventToken || battle.status !== 'open') {
