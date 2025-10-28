@@ -24,7 +24,7 @@ class RedisClient:
     async def set_tally(self, battle_id: str, tally: Dict[str, int]) -> None:
         """Set tally in Redis cache."""
         key = f"battle:{battle_id}:tally"
-        await self.redis.setex(key, 3600, json.dumps(tally))  # 1 hour TTL
+        await self.redis.setex(key, 10, json.dumps(tally))  # 10 seconds TTL
     
     async def increment_vote(self, battle_id: str, choice: str) -> int:
         """Increment vote counter in Redis."""

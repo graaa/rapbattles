@@ -220,10 +220,8 @@ async def check_if_voted(battle_id: str, device_hash: str, db: Session = Depends
 
 async def get_tallies_from_db(battle_id: str, db: Session) -> TallyResponse:
     """Get tallies from database."""
-    # Check Redis cache first
-    cached_tally = await redis_client.get_tally(battle_id)
-    if cached_tally:
-        return TallyResponse(A=cached_tally.get("A", 0), B=cached_tally.get("B", 0), REPLICA=cached_tally.get("REPLICA", 0))
+    # Don't use Redis cache for real-time results
+    # Always query from database for accuracy
     
     # Query database
     result = db.query(
