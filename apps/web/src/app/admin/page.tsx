@@ -198,7 +198,7 @@ export default function AdminPanel() {
                       try {
                         const token = await generateEventToken(event.id);
                         if (token) {
-                          const url = `http://localhost:3000/event/${event.id}?token=${token}`;
+                          const url = `${window.location.protocol}//${window.location.host}/event/${event.id}?token=${token}`;
                           alert(`Event Link:\n\n${url}\n\nCopy this link to share the event!`);
                         }
                       } catch (error) {
@@ -305,7 +305,7 @@ export default function AdminPanel() {
                                 try {
                                   const token = await generateEventToken(event.id);
                                   if (token) {
-                                    const url = `http://localhost:3000/battle/${battle.id}?token=${token}`;
+                                    const url = `${window.location.protocol}//${window.location.host}/battle/${battle.id}?token=${token}`;
                                     alert(`Battle Link:\n\n${url}\n\nCopy this link to share the battle!`);
                                   }
                                 } catch (error) {
