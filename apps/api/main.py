@@ -219,16 +219,11 @@ async def get_tallies_from_db(battle_id: str, db: Session) -> TallyResponse:
         Vote.battle_id == battle_id
     ).group_by(Vote.choice).all()
     
-    print(f"DEBUG TALLY: Query result: {result}")
-    
     tally = {"A": 0, "B": 0, "REPLICA": 0}
     for choice, count in result:
-        # choice is a string 'A', 'B', or 'REPLICA'
-        choice_str = str(choice)
-        print(f"DEBUG TALLY: choice={choice_str}, count={count}")
-        tally[choice_str] = count
-    
-    print(f"DEBUG TALLY: Final tally: {tally}")
+        # choice is a VoteChoice enum, get its value
+        choice_value = choice.value if hasattr(choice, 'value') else str(choice)
+        tally[choice_value] = count
     
     # Cache the result
     await redis_client.set_tally(battle_id, tally)
