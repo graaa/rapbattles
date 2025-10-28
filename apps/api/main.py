@@ -178,9 +178,6 @@ async def vote(
         db.commit()
         db.refresh(vote)
     
-    # Update Redis counters
-    await redis_client.increment_vote(str(battle_id), choice.value)
-    
     # Get current tally and publish update
     tally = await get_tallies_from_db(str(battle_id), db)
     await redis_client.set_tally(str(battle_id), {"A": tally.A, "B": tally.B, "REPLICA": tally.REPLICA})
