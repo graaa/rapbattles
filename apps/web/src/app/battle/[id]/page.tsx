@@ -156,11 +156,11 @@ export default function BattlePage() {
       const winnerKey = winners[0][0];
       if (winnerKey === 'A') return { name: battle.mc_a, choice: 'A' };
       if (winnerKey === 'B') return { name: battle.mc_b, choice: 'B' };
-      return { name: 'EMPATE', choice: 'REPLICA' };
+      return { name: 'REPLICA', choice: 'REPLICA' };
     }
     
     // Tie
-    return { name: 'EMPATE', choice: 'REPLICA' };
+    return { name: 'REPLICA', choice: 'REPLICA' };
   };
   
   const winner = getWinner();
@@ -261,7 +261,7 @@ export default function BattlePage() {
                 boxShadow: canVote ? '0 8px 25px rgba(132, 250, 176, 0.3)' : 'none'
               }}
             >
-              {voting ? <LoadingSpinner size="sm" /> : `🔥 EMPATE`}
+              {voting ? <LoadingSpinner size="sm" /> : `🔥 REPLICA`}
             </Button>
           </div>
         )}
@@ -282,7 +282,7 @@ export default function BattlePage() {
             <CardContent className="text-center py-8">
               <h2 className="text-3xl font-bold text-yellow-600 mb-4">🏆 VOTACIÓN CERRADA</h2>
               <div className="text-4xl font-bold text-yellow-700 mb-2">
-                {winner.name === 'EMPATE' ? '🤝 EMPATE' : '🥇 GANADOR'}
+                {winner.choice === 'REPLICA' ? '🤝 REPLICA' : '🥇 GANADOR'}
               </div>
               <div className="text-2xl font-bold text-gray-800 mt-4">{winner.name}</div>
               {winner.choice !== 'REPLICA' && (
@@ -309,7 +309,7 @@ export default function BattlePage() {
               </div>
               <div>
                 <div className="text-3xl font-bold text-green-600">{tally.REPLICA}</div>
-                <div className="text-sm text-gray-600">EMPATE</div>
+                <div className="text-sm text-gray-600">REPLICA</div>
               </div>
             </div>
           </CardContent>
