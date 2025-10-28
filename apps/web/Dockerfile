@@ -1,5 +1,4 @@
-# Build stage - Install ALL dependencies including dev
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
@@ -15,38 +14,15 @@ COPY packages ./packages
 # Copy web app
 COPY apps/web ./apps/web
 
-# Install dependencies (THIS installs TypeScript!)
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build packages first
-WORKDIR /app
+# Build packages
 RUN pnpm --filter @rapbattles/core build
 RUN pnpm --filter @rapbattles/ui build
 
-# Build web app
-RUN pnpm --filter @rapbattles/web build
-
-# Runtime stage
-FROM node:18-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copy built app
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/next.config.js ./next.config.js
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules ./node_modules
-
-USER nextjs
-
+# Expose port
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["sh", "-c", "node_modules/.bin/next start"]
+# Start in dev mode (no build needed)
+CMD ["pnpm", "--filter", "@rapbattles/web", "dev"]
