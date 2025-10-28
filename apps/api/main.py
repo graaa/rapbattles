@@ -184,8 +184,8 @@ async def vote(
     
     # Get current tally and publish update
     tally = await get_tallies_from_db(str(battle_id), db)
-    await redis_client.set_tally(str(battle_id), {"A": tally.A, "B": tally.B})
-    await redis_client.publish_tally(str(battle_id), {"A": tally.A, "B": tally.B})
+    await redis_client.set_tally(str(battle_id), {"A": tally.A, "B": tally.B, "REPLICA": tally.REPLICA})
+    await redis_client.publish_tally(str(battle_id), {"A": tally.A, "B": tally.B, "REPLICA": tally.REPLICA})
     
     return VoteResponse(
         success=True,
@@ -205,7 +205,7 @@ async def get_tallies_from_db(battle_id: str, db: Session) -> TallyResponse:
     # Check Redis cache first
     cached_tally = await redis_client.get_tally(battle_id)
     if cached_tally:
-        return TallyResponse(A=cached_tally["A"], B=cached_tally["B"])
+        return TallyResponse(A=cached_tally.get("A", 0), B=cached_tally.get("B", 0), REPLICA=cached_tally.get("REPLICA", 0))
     
     # Query database
     result = db.query(
@@ -215,14 +215,14 @@ async def get_tallies_from_db(battle_id: str, db: Session) -> TallyResponse:
         Vote.battle_id == battle_id
     ).group_by(Vote.choice).all()
     
-    tally = {"A": 0, "B": 0}
+    tally = {"A": 0, "B": 0, "REPLICA": 0}
     for choice, count in result:
         tally[choice.value] = count
     
     # Cache the result
     await redis_client.set_tally(battle_id, tally)
     
-    return TallyResponse(A=tally["A"], B=tally["B"])
+    return TallyResponse(A=tally["A"], B=tally["B"], REPLICA=tally["REPLICA"])
 
 
 @app.get("/sse/battles/{battle_id}")

@@ -16,7 +16,7 @@ export const BattleSchema = z.object({
 export type Battle = z.infer<typeof BattleSchema>;
 
 // Vote schemas
-export const VoteChoiceSchema = z.enum(['A', 'B']);
+export const VoteChoiceSchema = z.enum(['A', 'B', 'REPLICA']);
 export type VoteChoice = z.infer<typeof VoteChoiceSchema>;
 
 export const VoteRequestSchema = z.object({
@@ -32,6 +32,7 @@ export const VoteResponseSchema = z.object({
   tally: z.object({
     A: z.number(),
     B: z.number(),
+    REPLICA: z.number(),
   }).optional(),
 });
 export type VoteResponse = z.infer<typeof VoteResponseSchema>;
@@ -40,6 +41,7 @@ export type VoteResponse = z.infer<typeof VoteResponseSchema>;
 export const TallySchema = z.object({
   A: z.number(),
   B: z.number(),
+  REPLICA: z.number(),
 });
 export type Tally = z.infer<typeof TallySchema>;
 

@@ -17,7 +17,7 @@ export default function BattlePage() {
   const [voting, setVoting] = useState(false);
   const [voted, setVoted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tally, setTally] = useState({ A: 0, B: 0 });
+  const [tally, setTally] = useState({ A: 0, B: 0, REPLICA: 0 });
 
   const api = new ApiClient();
 
@@ -154,7 +154,7 @@ export default function BattlePage() {
 
             {/* Current Tally */}
             <div className="text-sm text-gray-600">
-              Votos actuales: {tally.A + tally.B}
+              Votos actuales: {tally.A + tally.B + tally.REPLICA}
             </div>
           </CardContent>
         </Card>
@@ -197,6 +197,24 @@ export default function BattlePage() {
             >
               {voting ? <LoadingSpinner size="sm" /> : `🔥 ${battle.mc_b}`}
             </Button>
+            
+            <Button
+              className={`w-full h-16 text-lg font-bold vote-button vote-button-replica ${!canVote ? 'vote-button-disabled' : ''}`}
+              onClick={() => handleVote('REPLICA')}
+              disabled={!canVote}
+              style={{
+                background: canVote ? 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)' : '#ccc',
+                border: 'none',
+                borderRadius: '15px',
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                padding: '20px',
+                boxShadow: canVote ? '0 8px 25px rgba(132, 250, 176, 0.3)' : 'none'
+              }}
+            >
+              {voting ? <LoadingSpinner size="sm" /> : `🔥 EMPATE`}
+            </Button>
           </div>
         )}
 
@@ -214,7 +232,7 @@ export default function BattlePage() {
         <Card>
           <CardContent className="py-6">
             <h2 className="text-xl font-bold text-center mb-4">Resultados en Tiempo Real</h2>
-            <div className="grid grid-cols-2 gap-8 text-center">
+            <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-3xl font-bold text-blue-600">{tally.A}</div>
                 <div className="text-sm text-gray-600">{battle.mc_a}</div>
@@ -222,6 +240,10 @@ export default function BattlePage() {
               <div>
                 <div className="text-3xl font-bold text-red-600">{tally.B}</div>
                 <div className="text-sm text-gray-600">{battle.mc_b}</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">{tally.REPLICA}</div>
+                <div className="text-sm text-gray-600">EMPATE</div>
               </div>
             </div>
           </CardContent>

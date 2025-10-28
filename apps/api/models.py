@@ -23,6 +23,7 @@ class VoteChoice(PyEnum):
     """Vote choice enum."""
     A = "A"
     B = "B"
+    REPLICA = "REPLICA"
 
 
 class Event(Base):

@@ -34,6 +34,7 @@ class TallyResponse(BaseModel):
     """Tally response schema."""
     A: int
     B: int
+    REPLICA: int
 
 
 class VoteResponse(BaseModel):
