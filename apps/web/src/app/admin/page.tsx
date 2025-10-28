@@ -152,16 +152,16 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Panel - Event Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Panel de Administración - Gestión de Eventos</h1>
         
         {/* Create New Event */}
         <Card className="mb-8">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Create New Event</h2>
+            <h2 className="text-xl font-semibold mb-4">Crear Nuevo Evento</h2>
             <div className="flex gap-4">
               <input
                 type="text"
-                placeholder="Event Name"
+                placeholder="Nombre del Evento"
                 value={newEventName}
                 onChange={(e) => setNewEventName(e.target.value)}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -171,7 +171,7 @@ export default function AdminPanel() {
                 disabled={creatingEvent || !newEventName.trim()}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {creatingEvent ? <LoadingSpinner size="sm" /> : 'Create Event'}
+                {creatingEvent ? <LoadingSpinner size="sm" /> : 'Crear Evento'}
               </Button>
             </div>
           </CardContent>
@@ -180,8 +180,8 @@ export default function AdminPanel() {
         {/* Events List */}
         {events.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No events yet</h3>
-            <p className="text-gray-600">Create your first event to get started!</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Aún no hay eventos</h3>
+            <p className="text-gray-600">¡Crea tu primer evento para comenzar!</p>
           </div>
         ) : (
           events.map((event) => (
@@ -199,52 +199,52 @@ export default function AdminPanel() {
                         const token = await generateEventToken(event.id);
                         if (token) {
                           const url = `${window.location.protocol}//${window.location.host}/event/${event.id}?token=${token}`;
-                          alert(`Event Link:\n\n${url}\n\nCopy this link to share the event!`);
+                          alert(`Link del Evento:\n\n${url}\n\n¡Copia este link para compartir el evento!`);
                         }
                       } catch (error) {
                         console.error('Failed to get event link:', error);
-                        alert('Failed to generate event link. Please try again.');
+                        alert('Error al generar link del evento. Por favor intenta de nuevo.');
                       }
                     }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    Show Event Link
+                    Ver Link del Evento
                   </Button>
                   
                   <Button
                     onClick={async () => {
-                      if (confirm(`Are you sure you want to delete the event "${event.name}" and all ${event.battles.length} battles in it? This action cannot be undone.`)) {
+                      if (confirm(`¿Estás seguro de que quieres eliminar el evento "${event.name}" y las ${event.battles.length} batallas en él? Esta acción no se puede deshacer.`)) {
                         try {
                           await api.deleteEvent(event.id);
-                          alert('Event deleted successfully!');
+                          alert('¡Evento eliminado con éxito!');
                           await loadEvents(); // Reload events
                         } catch (error: any) {
                           console.error('Failed to delete event:', error);
-                          alert(`Failed to delete event: ${error.message || 'Unknown error'}`);
+                          alert(`Error al eliminar evento: ${error.message || 'Error desconocido'}`);
                         }
                       }
                     }}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                   >
-                    Delete Event
+                    Eliminar Evento
                   </Button>
                 </div>
               </div>
 
               {/* Create Battle */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">Add New Battle</h3>
+                <h3 className="text-lg font-semibold mb-3">Agregar Nueva Batalla</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <input
                     type="text"
-                    placeholder="MC A Name"
+                    placeholder="Nombre MC A"
                     value={newBattleMcA}
                     onChange={(e) => setNewBattleMcA(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                   <input
                     type="text"
-                    placeholder="MC B Name"
+                    placeholder="Nombre MC B"
                     value={newBattleMcB}
                     onChange={(e) => setNewBattleMcB(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -254,16 +254,16 @@ export default function AdminPanel() {
                     disabled={!newBattleMcA.trim() || !newBattleMcB.trim()}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
                   >
-                    Create Battle
+                    Crear Batalla
                   </Button>
                 </div>
               </div>
 
               {/* Battles List */}
               <div>
-                <h3 className="text-lg font-semibold mb-4">Battles ({event.battles.length})</h3>
+                <h3 className="text-lg font-semibold mb-4">Batallas ({event.battles.length})</h3>
                 {event.battles.length === 0 ? (
-                  <p className="text-gray-500 italic">No battles created yet</p>
+                  <p className="text-gray-500 italic">Aún no se han creado batallas</p>
                 ) : (
                   <div className="space-y-4">
                     {event.battles.map((battle) => (
@@ -289,7 +289,7 @@ export default function AdminPanel() {
                                 onClick={() => openBattle(battle.id)}
                                 className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
                               >
-                                Open Voting
+                                Abrir Votación
                               </Button>
                             )}
                             {battle.status === 'open' && (
@@ -297,7 +297,7 @@ export default function AdminPanel() {
                                 onClick={() => closeBattle(battle.id)}
                                 className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
                               >
-                                Close Voting
+                                Cerrar Votación
                               </Button>
                             )}
                             <Button
@@ -306,16 +306,16 @@ export default function AdminPanel() {
                                   const token = await generateEventToken(event.id);
                                   if (token) {
                                     const url = `${window.location.protocol}//${window.location.host}/battle/${battle.id}?token=${token}`;
-                                    alert(`Battle Link:\n\n${url}\n\nCopy this link to share the battle!`);
+                                    alert(`Link de la Batalla:\n\n${url}\n\n¡Copia este link para compartir la batalla!`);
                                   }
                                 } catch (error) {
                                   console.error('Failed to get battle link:', error);
-                                  alert('Failed to generate battle link. Please try again.');
+                                  alert('Error al generar link de batalla. Por favor intenta de nuevo.');
                                 }
                               }}
                               className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                             >
-                              Show Link
+                              Ver Link
                             </Button>
                           </div>
                         </div>
