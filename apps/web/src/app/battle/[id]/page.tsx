@@ -141,7 +141,29 @@ export default function BattlePage() {
   }
 
   const isOpen = battle.status === 'open';
+  const isClosed = battle.status === 'closed';
   const canVote = isOpen && !voted && !voting;
+  
+  // Calculate winner when closed
+  const getWinner = () => {
+    if (!isClosed) return null;
+    
+    const votes = { A: tally.A, B: tally.B, REPLICA: tally.REPLICA };
+    const maxVotes = Math.max(votes.A, votes.B, votes.REPLICA);
+    const winners = Object.entries(votes).filter(([_, count]) => count === maxVotes);
+    
+    if (winners.length === 1) {
+      const winnerKey = winners[0][0];
+      if (winnerKey === 'A') return { name: battle.mc_a, choice: 'A' };
+      if (winnerKey === 'B') return { name: battle.mc_b, choice: 'B' };
+      return { name: 'EMPATE', choice: 'REPLICA' };
+    }
+    
+    // Tie
+    return { name: 'EMPATE', choice: 'REPLICA' };
+  };
+  
+  const winner = getWinner();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-red-50 py-4 px-4">
@@ -245,11 +267,29 @@ export default function BattlePage() {
         )}
 
         {/* Vote Confirmation */}
-        {voted && (
+        {voted && !isClosed && (
           <Card className="mb-8">
             <CardContent className="text-center py-6">
               <h2 className="text-xl font-bold text-green-600 mb-2">¡Voto registrado!</h2>
               <p className="text-gray-600">Gracias por votar.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Winner Announcement */}
+        {isClosed && winner && (
+          <Card className="mb-8 border-4 border-yellow-400 bg-yellow-50">
+            <CardContent className="text-center py-8">
+              <h2 className="text-3xl font-bold text-yellow-600 mb-4">🏆 VOTACIÓN CERRADA</h2>
+              <div className="text-4xl font-bold text-yellow-700 mb-2">
+                {winner.name === 'EMPATE' ? '🤝 EMPATE' : '🥇 GANADOR'}
+              </div>
+              <div className="text-2xl font-bold text-gray-800 mt-4">{winner.name}</div>
+              {winner.choice !== 'REPLICA' && (
+                <div className="text-lg text-gray-600 mt-2">
+                  {winner.choice === 'A' ? battle.mc_a : battle.mc_b}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
