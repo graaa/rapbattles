@@ -14,21 +14,37 @@ export default function EventPage() {
   const [battles, setBattles] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(eventToken);
 
   const api = new ApiClient();
 
   useEffect(() => {
-    if (!eventToken) {
-      setError('Token de evento faltante');
-      setLoading(false);
-      return;
-    }
+    loadData();
+  }, [eventId]);
 
-    loadBattles();
-  }, [eventId, eventToken]);
-
-  const loadBattles = async () => {
+  const loadData = async () => {
     try {
+      // Si no hay token, obtenerlo del API
+      let currentToken = token;
+      if (!currentToken) {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://167.71.80.114:8000'}/admin/events/${eventId}/token`, {
+            method: 'POST',
+            headers: {
+              'X-Admin-Key': 'change-me'
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            currentToken = data.token;
+            setToken(currentToken);
+          }
+        } catch (e) {
+          console.error('Could not get token:', e);
+        }
+      }
+
+      // Load battles (doesn't require token for listing)
       const battlesData = await api.getBattlesByEvent(eventId);
       setBattles(battlesData);
     } catch (err) {
@@ -128,7 +144,9 @@ export default function EventPage() {
                       {/* Action Button */}
                       <Button
                         onClick={() => {
-                          window.location.href = `/battle/${battle.id}?token=${eventToken}`;
+                          // Usar el token que obtuvimos
+                          const tokenParam = token ? `?token=${token}` : '';
+                          window.location.href = `/battle/${battle.id}${tokenParam}`;
                         }}
                         disabled={!isOpen}
                         className={`w-full py-3 text-lg font-bold rounded-lg transition-all duration-200 ${

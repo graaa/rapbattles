@@ -87,14 +87,6 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="mt-8 pt-8 border-t">
-              <Link 
-                href="/admin"
-                className="inline-flex items-center justify-center w-full bg-gray-800 text-white py-3 px-6 rounded-lg hover:bg-gray-900 transition-colors"
-              >
-                Panel de Administración
-              </Link>
-            </div>
           </>
         )}
       </div>
